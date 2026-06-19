@@ -125,6 +125,17 @@ transform:translateY(-3px);
 box-shadow:0 12px 25px rgba(0,0,0,.35);
 }
 
+.adminBtn{
+margin-top:12px;
+background:transparent;
+border:2px solid white;
+color:white;
+}
+
+.adminBtn:hover{
+background:rgba(255,255,255,.15);
+}
+
 .footer{
 margin-top:25px;
 color:white;
@@ -149,27 +160,44 @@ Pon a prueba tus conocimientos.<br>
 Ingresa tus datos para comenzar.
 </div>
 
-<input id="nombre" type="text" placeholder="Nombres y Apellidos" maxlength="80">
-<input id="dni" type="text" placeholder="DNI" maxlength="8">
+<input
+id="nombre"
+type="text"
+placeholder="Nombres y Apellidos"
+maxlength="80">
+
+<input
+id="dni"
+type="text"
+placeholder="DNI"
+maxlength="8">
 
 <div id="error"></div>
 
-<button onclick="comenzar()">COMENZAR</button>
+<button onclick="comenzar()">
+COMENZAR
+</button>
 
-<div class="footer">¡Muchos éxitos!</div>
+<button class="adminBtn" onclick="location.href='login.html'">
+👨‍🏫 Ingresar como docente
+</button>
+
+<div class="footer">
+¡Muchos éxitos!
+</div>
 
 </div>
 
 <script>
 
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzu7rKYIK5VYI8nSHDtiSn9HqzhGkpb5H5nFuj3dOKjQgRX2li8kbAum8R53tfTnIJikQ/exec";
+const SCRIPT_URL="https://script.google.com/macros/s/AKfycbwnRz0jHfErkG7GrljCaT9FEmz3HMsjWz1u8VqhXV7wb_Ai9AMABEJJkGRojw1c3ICaJQ/exec";
 
-const nombre = document.getElementById("nombre");
-const dni = document.getElementById("dni");
-const error = document.getElementById("error");
+const nombre=document.getElementById("nombre");
+const dni=document.getElementById("dni");
+const error=document.getElementById("error");
 
 dni.addEventListener("input",()=>{
-dni.value = dni.value.replace(/\D/g,"");
+dni.value=dni.value.replace(/\D/g,"");
 });
 
 function limpiar(){
@@ -182,51 +210,59 @@ async function comenzar(){
 
 limpiar();
 
-let n = nombre.value.trim().replace(/\s+/g," ");
-let d = dni.value.trim();
+const n=nombre.value.trim().replace(/\s+/g," ");
+const d=dni.value.trim();
 
-if(n.split(" ").length < 2){
+if(n.split(" ").length<2){
 nombre.classList.add("errorInput");
-error.innerHTML = "⚠️ Ingresa nombres y apellidos.";
+error.innerHTML="⚠️ Ingresa nombres y apellidos.";
 return;
 }
 
-if(d.length != 8){
+if(d.length!==8){
 dni.classList.add("errorInput");
-error.innerHTML = "⚠️ DNI inválido.";
+error.innerHTML="⚠️ Ingresa un DNI válido.";
 return;
 }
+
+const boton=document.querySelector("button");
+boton.disabled=true;
+boton.innerHTML="Ingresando...";
 
 try{
 
-/* 1. verificar configuración */
-const req = await fetch(SCRIPT_URL + "?accion=obtenerConfiguracion");
-const conf = await req.json();
-
-if(conf.estado !== "Activa"){
-error.innerHTML = "⚠️ La trivia no está activa.";
-return;
-}
-
-/* 2. registrar participante */
-await fetch(SCRIPT_URL, {
+const res=await fetch(SCRIPT_URL,{
 method:"POST",
 body:new URLSearchParams({
-accion:"registrarParticipante",
+accion:"iniciarTrivia",
 nombre:n,
 dni:d
 })
 });
 
-/* 3. guardar sesión */
-sessionStorage.setItem("nombre", n);
-sessionStorage.setItem("dni", d);
+const data=await res.json();
 
-/* 4. ir al juego */
-location.href = "game.html";
+if(!data.ok){
+error.innerHTML=data.mensaje;
+boton.disabled=false;
+boton.innerHTML="COMENZAR";
+return;
+}
+
+sessionStorage.setItem("nombre",n);
+sessionStorage.setItem("dni",d);
+
+location.href="game.html";
 
 }catch(e){
-error.innerHTML = "⚠️ Error de conexión con el servidor.";
+
+console.error(e);
+
+error.innerHTML="⚠️ No fue posible conectar con el servidor.";
+
+boton.disabled=false;
+boton.innerHTML="COMENZAR";
+
 }
 
 }
