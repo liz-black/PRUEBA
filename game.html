@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Trivia Pro</title>
+
+<style>
+body{
+margin:0;
+font-family:Arial;
+background:linear-gradient(135deg,#46178f,#e21b3c);
+color:white;
+}
+
+.timer{
+position:absolute;
+top:10px;
+right:10px;
+background:rgba(0,0,0,.4);
+padding:10px 15px;
+border-radius:20px;
+font-size:20px;
+}
+
+.container{
+display:flex;
+flex-direction:column;
+align-items:center;
+padding-top:60px;
+}
+
+img{
+width:90%;
+max-width:700px;
+border-radius:15px;
+margin:10px 0;
+}
+
+.question{
+font-size:28px;
+font-weight:bold;
+text-align:center;
+margin:10px;
+}
+
+.options{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+width:90%;
+max-width:700px;
+margin-top:10px;
+}
+
+.option{
+padding:18px;
+background:rgba(0,0,0,.3);
+border-radius:12px;
+text-align:center;
+cursor:pointer;
+font-size:18px;
+transition:.2s;
+}
+
+.option:hover{
+background:rgba(255,255,255,.2);
+}
+
+.final{
+display:flex;
+height:100vh;
+}
+
+.left, .right{
+flex:1;
+padding:30px;
+overflow:auto;
+}
+
+.card{
+background:rgba(255,255,255,.1);
+padding:20px;
+border-radius:15px;
+margin-bottom:10px;
+}
+
+.rank{
+font-size:18px;
+margin:6px 0;
+}
+
+.highlight{
+color:#FFD54F;
+font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="timer" id="timer">10</div>
+
+<div class="container" id="game">
+
+<div class="question" id="question"></div>
+<img id="img">
+<div class="options" id="options"></div>
+
+</div>
+
+<script>
+
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzu7rKYIK5VYI8nSHDtiSn9HqzhGkpb5H5nFuj3dOKjQgRX2li8kbAum8R53tfTnIJikQ/exec";
+
+const nombre = sessionStorage.getItem("nombre") || "Invitado";
+const dni = sessionStorage.getItem("dni") || "000";
+
+let tiempo = 10;
+let interval;
+let puntaje = 0;
+let correcta = "";
+
+async function cargarPregunta(){
+
+const res = await fetch(SCRIPT_URL + "?accion=obtenerPregunta");
+const data = await res.json();
+
+document.getElementById("question").innerText = data.pregunta;
+document.getElementById("img").src = data.imagen;
+
+correcta = data.correcta;
+
+const letras = ["A","B","C","D"];
+const cont = document.getElementById("options");
+
+cont.innerHTML = "";
+
+["a","b","c","d"].forEach((op,i)=>{
+
+const div = document.createElement("div");
+div.className = "option";
+div.innerText = data[op];
+
+div.onclick = ()=> seleccionar(letras[i]);
+
+cont.appendChild(div);
+
+});
+
+startTimer();
+
+}
+
+function startTimer(){
+
+tiempo = 10;
+
+interval = setInterval(()=>{
+
+tiempo--;
+document.getElementById("timer").innerText = tiempo;
+
+if(tiempo <= 0){
+clearInterval(interval);
+finalizar();
+}
+
+},1000);
+
+}
+
+function seleccionar(op){
+
+clearInterval(interval);
+
+if(op == correcta){
+puntaje += tiempo * 100;
+}
+
+finalizar();
+
+}
+
+async function obtenerRanking(){
+
+const res = await fetch(SCRIPT_URL + "?accion=ranking");
+return await res.json();
+
+}
+
+async function finalizar(){
+
+await fetch(SCRIPT_URL, {
+method:"POST",
+body:new URLSearchParams({
+accion:"guardarResultado",
+nombre:nombre,
+dni:dni,
+puntaje:puntaje,
+tiempo:10 - tiempo
+})
+});
+
+// 🔥 SIMULAMOS RANKING (si aún no tienes backend ranking)
+const ranking = await obtenerRanking().catch(()=>[]);
+
+document.getElementById("game").innerHTML = `
+<div class="final">
+
+<div class="left">
+<h2>🎮 Tu resultado</h2>
+<div class="card">
+<p><b>Nombre:</b> ${nombre}</p>
+<p><b>DNI:</b> ${dni}</p>
+<p><b>Puntaje:</b> <span class="highlight">${puntaje}</span></p>
+</div>
+</div>
+
+<div class="right">
+<h2>🏆 TOP 10</h2>
+${
+(ranking.length ? ranking : [
+{nombre:"Juan",puntaje:900},
+{nombre:"Maria",puntaje:800},
+{nombre:"Luis",puntaje:700}
+]).map((r,i)=>`
+<div class="rank">
+${i+1}. ${r.nombre} - <span class="highlight">${r.puntaje}</span>
+</div>
+`).join("")
+}
+</div>
+
+</div>
+`;
+
+}
+
+cargarPregunta();
+
+</script>
+
+</body>
+</html>
