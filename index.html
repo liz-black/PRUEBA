@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trivia</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:linear-gradient(135deg,#46178f 0%,#7b1fa2 45%,#e21b3c 100%);
+overflow:hidden;
+}
+
+body::before{
+content:"";
+position:absolute;
+width:700px;
+height:700px;
+border-radius:50%;
+background:rgba(255,255,255,.05);
+top:-250px;
+right:-250px;
+}
+
+body::after{
+content:"";
+position:absolute;
+width:600px;
+height:600px;
+border-radius:50%;
+background:rgba(255,255,255,.04);
+bottom:-220px;
+left:-220px;
+}
+
+.card{
+position:relative;
+z-index:2;
+width:90%;
+max-width:470px;
+padding:45px;
+border-radius:24px;
+background:rgba(255,255,255,.12);
+backdrop-filter:blur(18px);
+box-shadow:0 20px 60px rgba(0,0,0,.35);
+display:flex;
+flex-direction:column;
+align-items:center;
+}
+
+.logo{
+font-size:60px;
+margin-bottom:15px;
+}
+
+h1{
+color:white;
+font-size:44px;
+font-weight:900;
+}
+
+.sub{
+margin-top:10px;
+margin-bottom:28px;
+color:#F5F5F5;
+text-align:center;
+line-height:1.5;
+font-size:17px;
+}
+
+input{
+width:100%;
+padding:17px;
+margin-bottom:15px;
+border:none;
+border-radius:14px;
+font-size:18px;
+outline:none;
+}
+
+input:focus{
+box-shadow:0 0 0 3px #FFD54F;
+}
+
+.errorInput{
+box-shadow:0 0 0 3px #ff5252 !important;
+}
+
+#error{
+min-height:22px;
+width:100%;
+text-align:center;
+color:#FFD6D6;
+font-weight:bold;
+margin-bottom:12px;
+}
+
+button{
+width:100%;
+padding:18px;
+border:none;
+border-radius:14px;
+background:#111;
+color:white;
+font-size:20px;
+font-weight:bold;
+cursor:pointer;
+transition:.25s;
+}
+
+button:hover{
+transform:translateY(-3px);
+box-shadow:0 12px 25px rgba(0,0,0,.35);
+}
+
+.footer{
+margin-top:25px;
+color:white;
+font-size:13px;
+opacity:.85;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+<div class="logo">🧠</div>
+
+<h1>TRIVIA</h1>
+
+<div class="sub">
+Pon a prueba tus conocimientos.<br>
+Ingresa tus datos para comenzar.
+</div>
+
+<input id="nombre" type="text" placeholder="Nombres y Apellidos" maxlength="80">
+<input id="dni" type="text" placeholder="DNI" maxlength="8">
+
+<div id="error"></div>
+
+<button onclick="comenzar()">COMENZAR</button>
+
+<div class="footer">¡Muchos éxitos!</div>
+
+</div>
+
+<script>
+
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzu7rKYIK5VYI8nSHDtiSn9HqzhGkpb5H5nFuj3dOKjQgRX2li8kbAum8R53tfTnIJikQ/exec";
+
+const nombre = document.getElementById("nombre");
+const dni = document.getElementById("dni");
+const error = document.getElementById("error");
+
+dni.addEventListener("input",()=>{
+dni.value = dni.value.replace(/\D/g,"");
+});
+
+function limpiar(){
+nombre.classList.remove("errorInput");
+dni.classList.remove("errorInput");
+error.innerHTML="";
+}
+
+async function comenzar(){
+
+limpiar();
+
+let n = nombre.value.trim().replace(/\s+/g," ");
+let d = dni.value.trim();
+
+if(n.split(" ").length < 2){
+nombre.classList.add("errorInput");
+error.innerHTML = "⚠️ Ingresa nombres y apellidos.";
+return;
+}
+
+if(d.length != 8){
+dni.classList.add("errorInput");
+error.innerHTML = "⚠️ DNI inválido.";
+return;
+}
+
+try{
+
+/* 1. verificar configuración */
+const req = await fetch(SCRIPT_URL + "?accion=obtenerConfiguracion");
+const conf = await req.json();
+
+if(conf.estado !== "Activa"){
+error.innerHTML = "⚠️ La trivia no está activa.";
+return;
+}
+
+/* 2. registrar participante */
+await fetch(SCRIPT_URL, {
+method:"POST",
+body:new URLSearchParams({
+accion:"registrarParticipante",
+nombre:n,
+dni:d
+})
+});
+
+/* 3. guardar sesión */
+sessionStorage.setItem("nombre", n);
+sessionStorage.setItem("dni", d);
+
+/* 4. ir al juego */
+location.href = "game.html";
+
+}catch(e){
+error.innerHTML = "⚠️ Error de conexión con el servidor.";
+}
+
+}
+
+</script>
+
+</body>
+</html>
