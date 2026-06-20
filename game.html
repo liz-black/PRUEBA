@@ -1,72 +1,134 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <base target="_top">
-  <style>
-    body {
-      font-family: Arial;
-      background: #111;
-      color: white;
-      text-align: center;
-      padding: 20px;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trivia Kahoot Pro</title>
 
-    .card {
-      max-width: 600px;
-      margin: auto;
-      background: #1e1e1e;
-      padding: 20px;
-      border-radius: 12px;
-    }
+<style>
+body{
+margin:0;
+font-family:Arial;
+background:linear-gradient(135deg,#46178f,#e21b3c);
+color:white;
+height:100vh;
+overflow:hidden;
+}
 
-    button {
-      width: 100%;
-      padding: 15px;
-      margin-top: 10px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 16px;
-      color: white;
-    }
+.timer{
+position:absolute;
+top:10px;
+right:15px;
+font-size:22px;
+font-weight:bold;
+background:rgba(0,0,0,.3);
+padding:8px 14px;
+border-radius:20px;
+}
 
-    .A { background: #ff4d4d; }
-    .B { background: #4d79ff; }
-    .C { background: #4dff88; }
-    .D { background: #ffd24d; }
+.container{
+height:100vh;
+display:flex;
+flex-direction:column;
+}
 
-    #timer {
-      font-size: 20px;
-      margin-bottom: 10px;
-    }
+.content{
+margin-top:auto;
+display:flex;
+flex-direction:column;
+align-items:center;
+}
 
-    #result {
-      margin-top: 15px;
-      font-size: 18px;
-      font-weight: bold;
-    }
+img{
+width:96%;
+max-width:850px;
+height:320px;
+border-radius:16px;
+object-fit:cover;
+margin-bottom:12px;
+box-shadow:0 4px 20px rgba(0,0,0,.25);
+}
 
-  </style>
+.question{
+font-size:34px;
+font-weight:bold;
+text-align:center;
+margin:10px;
+}
+
+.options{
+height:48vh;
+width:100%;
+display:grid;
+grid-template-columns:1fr 1fr;
+grid-template-rows:1fr 1fr;
+gap:8px;
+padding:10px;
+box-sizing:border-box;
+}
+
+.option{
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:28px;
+font-weight:bold;
+border-radius:16px;
+cursor:pointer;
+user-select:none;
+}
+
+.red{background:#e21b3c}
+.blue{background:#1368ce}
+.green{background:#26890c}
+.yellow{background:#e9b000;color:#000}
+
+#result{
+text-align:center;
+font-size:20px;
+margin:10px;
+font-weight:bold;
+}
+
+.final{
+height:100vh;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+text-align:center;
+}
+
+.final h1{font-size:40px;margin-bottom:10px}
+.final h2{opacity:.8}
+.final .score{font-size:70px;font-weight:bold;color:#FFD54F}
+
+.rank{
+margin-top:20px;
+font-size:18px;
+}
+</style>
 </head>
 
 <body>
 
-  <div class="card">
+<div class="timer" id="timer">--</div>
 
-    <h2>🎮 TRIVIA ZULEN</h2>
+<div class="container">
 
-    <div id="timer">⏳ 00</div>
+<div class="content">
 
-    <p id="pregunta">Cargando pregunta...</p>
+<img id="img">
 
-    <button class="A" onclick="responder('A')">A</button>
-    <button class="B" onclick="responder('B')">B</button>
-    <button class="C" onclick="responder('C')">C</button>
-    <button class="D" onclick="responder('D')">D</button>
+<div class="question" id="question">Cargando...</div>
 
-    <p id="result"></p>
+</div>
 
-  </div>
+<div class="options" id="options"></div>
+
+<div id="result"></div>
+
+</div>
 
 <script>
 
@@ -74,133 +136,167 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydDWKZeSXHQesgay6Wy
 
 let tiempo = 0;
 let intervalo;
-let preguntaActual = null;
+let pregunta = null;
+let respondido = false;
+let puntajeTotal = 0;
 
-// ==========================
-// CARGAR CONFIG + PREGUNTA
-// ==========================
-async function cargarJuego() {
+const nombre = sessionStorage.getItem("nombre");
+const dni = sessionStorage.getItem("dni");
 
-  try {
+// =======================
+// CARGAR PREGUNTA
+// =======================
+async function cargar(){
 
-    const confRes = await fetch(SCRIPT_URL + "?accion=configuracion");
-    const conf = await confRes.json();
+const conf = await fetch(SCRIPT_URL+"?accion=configuracion").then(r=>r.json());
 
-    if (!conf.ok || conf.estado !== "Activa") {
-      document.getElementById("pregunta").innerText = "⛔ Trivia no activa";
-      return;
-    }
-
-    tiempo = parseInt(conf.tiempo || 30);
-    iniciarTimer();
-
-    const pregRes = await fetch(SCRIPT_URL + "?accion=pregunta");
-    const data = await pregRes.json();
-
-    if (!data.ok) return;
-
-    preguntaActual = data;
-
-    document.getElementById("pregunta").innerText = data.pregunta;
-
-    document.querySelector(".A").innerText = "A) " + data.a;
-    document.querySelector(".B").innerText = "B) " + data.b;
-    document.querySelector(".C").innerText = "C) " + data.c;
-    document.querySelector(".D").innerText = "D) " + data.d;
-
-  } catch (e) {
-    document.getElementById("result").innerText = "❌ Error de conexión";
-  }
+if(!conf.ok || conf.estado !== "Activa"){
+document.body.innerHTML = "<h1 style='text-align:center;margin-top:40vh'>⛔ Trivia no activa</h1>";
+return;
 }
 
-// ==========================
+tiempo = parseInt(conf.tiempo || 30);
+startTimer();
+
+const data = await fetch(SCRIPT_URL+"?accion=pregunta").then(r=>r.json());
+
+if(!data.ok) return;
+
+pregunta = data;
+
+document.getElementById("img").src = data.imagen || "";
+document.getElementById("question").innerText = data.pregunta;
+
+const colores = ["red","blue","green","yellow"];
+const letras = ["A","B","C","D"];
+const textos = [data.a,data.b,data.c,data.d];
+
+const options = document.getElementById("options");
+options.innerHTML = "";
+
+textos.forEach((t,i)=>{
+
+const div = document.createElement("div");
+div.className = "option "+colores[i];
+div.innerText = letras[i]+") "+t;
+
+div.onclick = ()=> responder(letras[i]);
+
+options.appendChild(div);
+
+});
+
+}
+
+// =======================
 // TIMER
-// ==========================
-function iniciarTimer() {
+// =======================
+function startTimer(){
 
-  document.getElementById("timer").innerText = "⏳ " + tiempo;
+clearInterval(intervalo);
 
-  intervalo = setInterval(() => {
+document.getElementById("timer").innerText = tiempo;
 
-    tiempo--;
-    document.getElementById("timer").innerText = "⏳ " + tiempo;
+intervalo = setInterval(()=>{
 
-    if (tiempo <= 0) {
-      clearInterval(intervalo);
-      bloquear();
-    }
+tiempo--;
+document.getElementById("timer").innerText = tiempo;
 
-  }, 1000);
+if(tiempo<=0){
+clearInterval(intervalo);
+bloquear();
 }
 
-// ==========================
+},1000);
+
+}
+
+// =======================
 // BLOQUEAR
-// ==========================
-function bloquear() {
+// =======================
+function bloquear(){
 
-  document.querySelectorAll("button").forEach(b => {
-    b.disabled = true;
-  });
+respondido = true;
 
-  document.getElementById("result").innerText = "⛔ Tiempo terminado";
+document.querySelectorAll(".option").forEach(o=>{
+o.style.pointerEvents="none";
+o.style.opacity="0.6";
+});
+
 }
 
-// ==========================
+// =======================
 // RESPONDER
-// ==========================
-async function responder(opcion) {
+// =======================
+async function responder(opcion){
 
-  clearInterval(intervalo);
+if(respondido) return;
 
-  const nombre = sessionStorage.getItem("nombre");
-  const dni = sessionStorage.getItem("dni");
+respondido = true;
+clearInterval(intervalo);
 
-  if (!nombre || !dni) {
-    alert("Datos no encontrados. Vuelve a iniciar.");
-    location.href = "index.html";
-    return;
-  }
+let puntos = 0;
 
-  document.querySelectorAll("button").forEach(b => b.disabled = true);
+if(opcion === pregunta.correcta){
+puntos = 1;
+}
 
-  // calcular puntaje
-  let puntaje = 0;
+puntajeTotal += puntos;
 
-  if (preguntaActual && opcion === preguntaActual.correcta) {
-    puntaje = 1;
-  }
+document.getElementById("result").innerText =
+puntos ? "✅ Correcto" : "❌ Incorrecto";
 
-  const datos = new URLSearchParams({
-    accion: "guardarResultado",
-    nombre: nombre,
-    dni: dni,
-    puntaje: puntaje,
-    tiempo: tiempo
-  });
+// guardar
+await fetch(SCRIPT_URL,{
+method:"POST",
+body:new URLSearchParams({
+accion:"guardarResultado",
+nombre:nombre,
+dni:dni,
+puntaje:puntos,
+tiempo:tiempo
+})
+});
 
-  try {
+bloquear();
 
-    const res = await fetch(SCRIPT_URL, {
-      method: "POST",
-      body: datos
-    });
+// mostrar final + ranking
+setTimeout(()=>finalScreen(),1200);
 
-    const json = await res.json();
+}
 
-    if (json.ok) {
-      document.getElementById("result").innerText =
-        puntaje ? "✅ Correcto +1 punto" : "❌ Incorrecto";
-    } else {
-      document.getElementById("result").innerText = "❌ Error al guardar";
-    }
+// =======================
+// FINAL SCREEN + RANKING
+// =======================
+async function finalScreen(){
 
-  } catch (e) {
-    document.getElementById("result").innerText = "❌ Error de servidor";
-  }
+const res = await fetch(SCRIPT_URL+"?accion=ranking").then(r=>r.json());
+
+let rankHTML = "";
+
+if(res.ok){
+res.ranking.forEach((r,i)=>{
+rankHTML += `<div>${i+1}. ${r.nombre} - ${r.puntaje}</div>`;
+});
+}
+
+document.body.innerHTML = `
+<div class="final">
+<h1>🎉 ¡Terminado!</h1>
+<h2>${nombre}</h2>
+<div class="score">${puntajeTotal}</div>
+
+<div class="rank">
+<h3>🏆 TOP 10</h3>
+${rankHTML}
+</div>
+</div>
+`;
+
 }
 
 // iniciar
-cargarJuego();
+cargar();
 
 </script>
 
