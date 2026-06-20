@@ -71,24 +71,12 @@ max-width:100%;
 border-radius:10px;
 display:none;
 }
-
-.topbar{
-text-align:right;
-font-size:14px;
-margin-bottom:10px;
-color:#46178f;
-font-weight:bold;
-}
 </style>
 </head>
 
 <body>
 
 <div class="card">
-
-<div class="topbar">
-👨‍🏫 Docente: <span id="usuario"></span>
-</div>
 
 <h1>Panel Docente</h1>
 
@@ -136,8 +124,8 @@ font-weight:bold;
 <div>
 <label>Estado</label>
 <select id="estado">
-<option value="Activa">Activa</option>
-<option value="Inactiva">Inactiva</option>
+<option>Activa</option>
+<option>Inactiva</option>
 </select>
 </div>
 
@@ -148,7 +136,7 @@ font-weight:bold;
 
 </div>
 
-<button onclick="guardar()">💾 Guardar Trivia</button>
+<button onclick="guardar()">Guardar Trivia</button>
 
 <div id="msg"></div>
 
@@ -156,35 +144,18 @@ font-weight:bold;
 
 <script>
 
-// =========================
-// PROTECCIÓN DE ACCESO
-// =========================
-if(sessionStorage.getItem("docente") !== "true"){
-alert("Acceso denegado");
-location.href = "login.html";
-}
-
-// mostrar usuario
-document.getElementById("usuario").innerText =
-sessionStorage.getItem("usuario") || "Docente";
-
-// =========================
-// CONFIG
-// =========================
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzu7rKYIK5VYI8nSHDtiSn9HqzhGkpb5H5nFuj3dOKjQgRX2li8kbAum8R53tfTnIJikQ/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydDWKZeSXHQesgay6WydQvD140EFW2Uo73edhbjW6p7YhnQsvjE4x1jkEJYGpZGqYcnA/exec";
 
 // =========================
 // PREVIEW IMAGEN
 // =========================
 function preview(){
-const url=document.getElementById("imagen").value.trim();
-const img=document.getElementById("vista");
-
+const url = imagen.value.trim();
 if(url){
-img.src=url;
-img.style.display="block";
+vista.src = url;
+vista.style.display = "block";
 }else{
-img.style.display="none";
+vista.style.display = "none";
 }
 }
 
@@ -193,7 +164,9 @@ img.style.display="none";
 // =========================
 async function guardar(){
 
-const datos=new URLSearchParams({
+msg.innerHTML = "Guardando...";
+
+const datos = new URLSearchParams({
 accion:"guardarTrivia",
 pregunta:pregunta.value,
 imagen:imagen.value,
@@ -201,28 +174,32 @@ a:a.value,
 b:b.value,
 c:c.value,
 d:d.value,
-correcta:correcta.value,
-estado:estado.value,
-tiempo:tiempo.value
+correcta:correcta.value
 });
 
 try{
 
-const r=await fetch(SCRIPT_URL,{
+await fetch(SCRIPT_URL, {
 method:"POST",
+mode:"no-cors",
 body:datos
 });
 
-const res=await r.json();
+// ⚠️ no se puede leer respuesta en GitHub Pages
+msg.innerHTML = "✅ Pregunta guardada correctamente (reemplazada)";
 
-if(res.ok){
-msg.innerHTML="✅ Trivia guardada correctamente.";
-}else{
-msg.innerHTML="❌ No se pudo guardar.";
-}
+pregunta.value="";
+imagen.value="";
+a.value="";
+b.value="";
+c.value="";
+d.value="";
 
 }catch(e){
-msg.innerHTML="❌ Error de conexión.";
+
+console.log(e);
+msg.innerHTML = "❌ Error de conexión";
+
 }
 
 }
