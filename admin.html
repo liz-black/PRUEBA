@@ -126,32 +126,37 @@ img.style.display = "none";
 // ========================
 // GUARDAR TRIVIA (SIN CORS)
 // ========================
-function guardar(){
+async function guardar(){
 
-const form = new URLSearchParams();
+  const url = SCRIPT_URL;
 
-form.append("accion","guardarTrivia");
-form.append("pregunta",document.getElementById("pregunta").value);
-form.append("imagen",document.getElementById("imagen").value);
-form.append("a",document.getElementById("a").value);
-form.append("b",document.getElementById("b").value);
-form.append("c",document.getElementById("c").value);
-form.append("d",document.getElementById("d").value);
-form.append("correcta",document.getElementById("correcta").value);
+  const datos = new URLSearchParams();
 
-document.getElementById("msg").innerText = "Guardando...";
+  datos.append("accion","guardarTrivia");
+  datos.append("pregunta",document.getElementById("pregunta").value);
+  datos.append("imagen",document.getElementById("imagen").value);
+  datos.append("a",document.getElementById("a").value);
+  datos.append("b",document.getElementById("b").value);
+  datos.append("c",document.getElementById("c").value);
+  datos.append("d",document.getElementById("d").value);
+  datos.append("correcta",document.getElementById("correcta").value);
 
-fetch(SCRIPT_URL,{
-method:"POST",
-mode:"no-cors",
-body:form
-});
+  try{
 
-// 🔥 como no hay respuesta por no-cors, asumimos éxito
-setTimeout(()=>{
-document.getElementById("msg").innerText = "✅ Enviado (verifica Sheets)";
-},1500);
+    const res = await fetch(url,{
+      method:"POST",
+      body:datos
+    });
 
+    const text = await res.text();
+    console.log("RESPUESTA:", text);
+
+    document.getElementById("msg").innerText = "Servidor respondió: " + text;
+
+  }catch(err){
+    console.log(err);
+    document.getElementById("msg").innerText = "ERROR DE CONEXIÓN";
+  }
 }
 
 </script>
