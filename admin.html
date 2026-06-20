@@ -6,12 +6,60 @@
 <title>Admin Trivia</title>
 
 <style>
-body{font-family:Arial;background:#46178f;color:#fff;margin:0;padding:20px}
-.card{background:#fff;color:#000;padding:20px;border-radius:12px;max-width:600px;margin:auto}
-input,select{width:100%;padding:10px;margin:5px 0}
-button{width:100%;padding:15px;background:#111;color:#fff;border:none;margin-top:10px;cursor:pointer}
-img{max-width:100%;display:none;margin-top:10px;border-radius:10px}
-#msg{margin-top:10px;font-weight:bold}
+body{
+font-family:Arial;
+background:#46178f;
+color:#fff;
+margin:0;
+padding:20px;
+}
+
+.card{
+background:#fff;
+color:#000;
+padding:20px;
+border-radius:12px;
+max-width:600px;
+margin:auto;
+box-shadow:0 10px 30px rgba(0,0,0,.3);
+}
+
+h2{text-align:center}
+
+input,select{
+width:100%;
+padding:10px;
+margin:5px 0;
+border-radius:8px;
+border:1px solid #ccc;
+}
+
+button{
+width:100%;
+padding:15px;
+background:#111;
+color:#fff;
+border:none;
+margin-top:10px;
+cursor:pointer;
+border-radius:10px;
+font-size:16px;
+}
+
+button:hover{opacity:.9}
+
+img{
+max-width:100%;
+display:none;
+margin-top:10px;
+border-radius:10px;
+}
+
+#msg{
+margin-top:10px;
+font-weight:bold;
+text-align:center;
+}
 </style>
 </head>
 
@@ -19,7 +67,7 @@ img{max-width:100%;display:none;margin-top:10px;border-radius:10px}
 
 <div class="card">
 
-<h2>Panel Admin</h2>
+<h2>👨‍🏫 Panel Admin Trivia</h2>
 
 <label>Pregunta</label>
 <input id="pregunta">
@@ -28,12 +76,17 @@ img{max-width:100%;display:none;margin-top:10px;border-radius:10px}
 <input id="imagen" oninput="preview()">
 <img id="vista">
 
-<div>
-<label>A</label><input id="a">
-<label>B</label><input id="b">
-<label>C</label><input id="c">
-<label>D</label><input id="d">
-</div>
+<label>A</label>
+<input id="a">
+
+<label>B</label>
+<input id="b">
+
+<label>C</label>
+<input id="c">
+
+<label>D</label>
+<input id="d">
 
 <label>Correcta</label>
 <select id="correcta">
@@ -43,7 +96,7 @@ img{max-width:100%;display:none;margin-top:10px;border-radius:10px}
 <option value="D">D</option>
 </select>
 
-<button onclick="guardar()">Guardar</button>
+<button onclick="guardar()">GUARDAR TRIVIA</button>
 
 <div id="msg"></div>
 
@@ -53,9 +106,12 @@ img{max-width:100%;display:none;margin-top:10px;border-radius:10px}
 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydDWKZeSXHQesgay6WydQvD140EFW2Uo73edhbjW6p7YhnQsvjE4x1jkEJYGpZGqYcnA/exec";
 
-// 🔥 PREVIEW (CORRECTO)
+// ========================
+// PREVIEW IMAGEN
+// ========================
 function preview(){
-const url = document.getElementById("imagen").value;
+
+const url = document.getElementById("imagen").value.trim();
 const img = document.getElementById("vista");
 
 if(url){
@@ -64,33 +120,49 @@ img.style.display = "block";
 }else{
 img.style.display = "none";
 }
+
 }
 
+// ========================
+// GUARDAR TRIVIA
+// ========================
 async function guardar(){
 
-  const form = new URLSearchParams();
+const form = new URLSearchParams();
 
-  form.append("accion","guardarTrivia");
-  form.append("pregunta",pregunta.value);
-  form.append("imagen",imagen.value);
-  form.append("a",a.value);
-  form.append("b",b.value);
-  form.append("c",c.value);
-  form.append("d",d.value);
-  form.append("correcta",correcta.value);
+form.append("accion","guardarTrivia");
+form.append("pregunta",document.getElementById("pregunta").value);
+form.append("imagen",document.getElementById("imagen").value);
+form.append("a",document.getElementById("a").value);
+form.append("b",document.getElementById("b").value);
+form.append("c",document.getElementById("c").value);
+form.append("d",document.getElementById("d").value);
+form.append("correcta",document.getElementById("correcta").value);
 
-  const res = await fetch(SCRIPT_URL,{
-    method:"POST",
-    body:form
-  });
+document.getElementById("msg").innerText = "Guardando...";
 
-  const text = await res.text();
+try{
 
-  console.log(text);
-  msg.innerText = text;
+const res = await fetch(SCRIPT_URL,{
+method:"POST",
+body:form
+});
+
+const text = await res.text();
+
+if(text.includes("true") || text.includes("ok") || text.includes("saved")){
+document.getElementById("msg").innerText = "✅ Guardado correctamente";
+}else{
+document.getElementById("msg").innerText = "⚠️ Respuesta: " + text;
 }
 
-  
+}catch(e){
+document.getElementById("msg").innerText = "❌ Error de conexión";
+console.log(e);
+}
+
+}
+
 </script>
 
 </body>
