@@ -68,28 +68,26 @@ img.style.display = "none";
 
 async function guardar(){
 
-msg.innerText = "Guardando...";
+  const form = new URLSearchParams();
 
-const payload = {
-accion:"guardarTrivia",
-pregunta:pregunta.value,
-imagen:imagen.value,
-a:a.value,
-b:b.value,
-c:c.value,
-d:d.value,
-correcta:correcta.value
-};
+  form.append("accion","guardarTrivia");
+  form.append("pregunta",pregunta.value);
+  form.append("imagen",imagen.value);
+  form.append("a",a.value);
+  form.append("b",b.value);
+  form.append("c",c.value);
+  form.append("d",d.value);
+  form.append("correcta",correcta.value);
 
-await fetch(SCRIPT_URL,{
-method:"POST",
-body: JSON.stringify(payload),
-headers:{
-"Content-Type":"text/plain"
-}
-});
+  const res = await fetch(SCRIPT_URL,{
+    method:"POST",
+    body:form
+  });
 
-msg.innerText = "✅ Guardado correctamente";
+  const text = await res.text();
+
+  console.log(text);
+  msg.innerText = text;
 }
 
   
