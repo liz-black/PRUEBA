@@ -69,17 +69,18 @@ font-size:14px;
 
 <script>
 
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzu7rKYIK5VYI8nSHDtiSn9HqzhGkpb5H5nFuj3dOKjQgRX2li8kbAum8R53tfTnIJikQ/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydDWKZeSXHQesgay6WydQvD140EFW2Uo73edhbjW6p7YhnQsvjE4x1jkEJYGpZGqYcnA/exec";
 
 async function login(){
 
 const user = document.getElementById("user").value.trim();
 const pass = document.getElementById("pass").value.trim();
 
-document.getElementById("error").innerText = "";
+const error = document.getElementById("error");
+error.innerText = "";
 
 if(!user || !pass){
-document.getElementById("error").innerText = "Completa todos los campos";
+error.innerText = "Completa todos los campos";
 return;
 }
 
@@ -87,6 +88,9 @@ try{
 
 const res = await fetch(SCRIPT_URL, {
 method:"POST",
+headers:{
+"Content-Type":"application/x-www-form-urlencoded"
+},
 body:new URLSearchParams({
 accion:"loginDocente",
 usuario:user,
@@ -94,25 +98,33 @@ contrasena:pass
 })
 });
 
-const data = await res.json();
+// 🔥 IMPORTANTE: primero texto, luego JSON (evita error de conexión falso)
+const text = await res.text();
+
+let data;
+
+try {
+data = JSON.parse(text);
+} catch(e){
+console.log("Respuesta no JSON:", text);
+error.innerText = "Error del servidor (respuesta inválida)";
+return;
+}
 
 if(data.ok){
 
-// 🔥 guardar sesión docente
 sessionStorage.setItem("docente","true");
-
-// opcional: guardar usuario
 sessionStorage.setItem("usuario",user);
 
-// ir al panel
 location.href = "admin.html";
 
 }else{
-document.getElementById("error").innerText = "Usuario o contraseña incorrectos";
+error.innerText = "Usuario o contraseña incorrectos";
 }
 
 }catch(e){
-document.getElementById("error").innerText = "Error de conexión con el servidor";
+console.log(e);
+error.innerText = "Error de conexión con el servidor";
 }
 
 }
