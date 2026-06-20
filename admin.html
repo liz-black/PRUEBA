@@ -105,7 +105,6 @@ text-align:center;
 <script>
 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydDWKZeSXHQesgay6WydQvD140EFW2Uo73edhbjW6p7YhnQsvjE4x1jkEJYGpZGqYcnA/exec";
-  
 
 // ========================
 // PREVIEW IMAGEN
@@ -125,9 +124,9 @@ img.style.display = "none";
 }
 
 // ========================
-// GUARDAR TRIVIA
+// GUARDAR TRIVIA (SIN CORS)
 // ========================
-async function guardar(){
+function guardar(){
 
 const form = new URLSearchParams();
 
@@ -142,25 +141,16 @@ form.append("correcta",document.getElementById("correcta").value);
 
 document.getElementById("msg").innerText = "Guardando...";
 
-try{
-
-const res = await fetch(SCRIPT_URL,{
+fetch(SCRIPT_URL,{
 method:"POST",
+mode:"no-cors",
 body:form
 });
 
-const text = await res.text();
-
-if(text.includes("true") || text.includes("ok") || text.includes("saved")){
-document.getElementById("msg").innerText = "✅ Guardado correctamente";
-}else{
-document.getElementById("msg").innerText = "⚠️ Respuesta: " + text;
-}
-
-}catch(e){
-document.getElementById("msg").innerText = "❌ Error de conexión";
-console.log(e);
-}
+// 🔥 como no hay respuesta por no-cors, asumimos éxito
+setTimeout(()=>{
+document.getElementById("msg").innerText = "✅ Enviado (verifica Sheets)";
+},1500);
 
 }
 
