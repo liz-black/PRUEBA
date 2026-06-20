@@ -70,7 +70,7 @@ async function guardar(){
 
 msg.innerText = "Guardando...";
 
-const data = {
+const payload = {
 accion:"guardarTrivia",
 pregunta:pregunta.value,
 imagen:imagen.value,
@@ -81,13 +81,18 @@ d:d.value,
 correcta:correcta.value
 };
 
-fetch(SCRIPT_URL,{
+await fetch(SCRIPT_URL,{
 method:"POST",
-body: JSON.stringify(data)
+body: JSON.stringify(payload),
+headers:{
+"Content-Type":"text/plain"
+}
 });
 
-msg.innerText = "✅ Guardado (reemplaza pregunta)";
+msg.innerText = "✅ Guardado correctamente";
 }
+
+  
 </script>
 
 </body>
