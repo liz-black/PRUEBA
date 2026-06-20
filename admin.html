@@ -166,16 +166,25 @@ async function guardar(){
 
 msg.innerHTML = "Guardando...";
 
-const datos = new URLSearchParams({
-accion:"guardarTrivia",
-pregunta:pregunta.value,
-imagen:imagen.value,
-a:a.value,
-b:b.value,
-c:c.value,
-d:d.value,
-correcta:correcta.value
+const datos = new URLSearchParams();
+
+datos.append("accion","guardarTrivia");
+datos.append("pregunta",pregunta.value);
+datos.append("imagen",imagen.value);
+datos.append("a",a.value);
+datos.append("b",b.value);
+datos.append("c",c.value);
+datos.append("d",d.value);
+datos.append("correcta",correcta.value);
+
+await fetch(SCRIPT_URL,{
+  method:"POST",
+  mode:"no-cors",
+  body:datos
 });
+
+msg.innerHTML = "✅ Guardado correctamente (reemplaza pregunta)";
+}
 
 try{
 
