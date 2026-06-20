@@ -2,116 +2,101 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Admin Trivia</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Docente - Trivia</title>
 <style>
-
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
 body{
-margin:0;
-font-family:Arial;
-background:linear-gradient(135deg,#46178f,#e21b3c);
-color:white;
+background:linear-gradient(135deg,#46178f,#7b1fa2,#e21b3c);
+min-height:100vh;
 display:flex;
 justify-content:center;
 align-items:center;
-min-height:100vh;
-}
-
-.card{
-width:90%;
-max-width:600px;
-background:rgba(255,255,255,.12);
-backdrop-filter:blur(15px);
 padding:30px;
-border-radius:20px;
-box-shadow:0 20px 50px rgba(0,0,0,.3);
 }
-
-h2{
-text-align:center;
-margin-bottom:20px;
+.card{
+width:100%;
+max-width:720px;
+background:#fff;
+border-radius:18px;
+padding:30px;
+box-shadow:0 15px 40px rgba(0,0,0,.25);
 }
-
-input, select{
+h1{text-align:center;margin-bottom:25px;color:#46178f}
+label{display:block;margin-top:14px;margin-bottom:6px;font-weight:bold}
+input,select{
 width:100%;
 padding:12px;
-margin:8px 0;
-border:none;
+border:1px solid #ccc;
 border-radius:10px;
 font-size:16px;
-outline:none;
 }
-
-label{
-font-size:14px;
-opacity:.9;
+.grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:12px;
 }
-
 button{
+margin-top:25px;
 width:100%;
 padding:15px;
-margin-top:15px;
 border:none;
 border-radius:12px;
-background:#111;
-color:white;
+background:#46178f;
+color:#fff;
 font-size:18px;
 cursor:pointer;
-transition:.2s;
 }
-
-button:hover{
-transform:translateY(-2px);
-}
-
-.row{
-display:flex;
-gap:10px;
-}
-
-.row input{
-flex:1;
-}
-
-.status{
-display:flex;
-gap:10px;
-margin-top:10px;
-}
-
-.status label{
-flex:1;
+button:hover{opacity:.95}
+#msg{
+margin-top:15px;
 text-align:center;
-background:rgba(0,0,0,.2);
-padding:10px;
-border-radius:10px;
-cursor:pointer;
+font-weight:bold;
+color:#0a7a22;
 }
-
+img{
+margin-top:10px;
+max-width:100%;
+border-radius:10px;
+display:none;
+}
 </style>
-
 </head>
-
 <body>
 
 <div class="card">
 
-<h2>👨‍🏫 PANEL DOCENTE</h2>
+<h1>Panel Docente</h1>
 
 <label>Pregunta</label>
-<input id="pregunta" placeholder="Escribe la pregunta">
+<input id="pregunta">
 
-<label>URL Imagen</label>
-<input id="imagen" placeholder="https://...">
+<label>Imagen (URL)</label>
+<input id="imagen" oninput="preview()">
+<img id="vista">
 
-<div class="row">
-<input id="opA" placeholder="Opción A">
-<input id="opB" placeholder="Opción B">
+<div class="grid">
+
+<div>
+<label>Opción A</label>
+<input id="a">
 </div>
 
-<div class="row">
-<input id="opC" placeholder="Opción C">
-<input id="opD" placeholder="Opción D">
+<div>
+<label>Opción B</label>
+<input id="b">
+</div>
+
+<div>
+<label>Opción C</label>
+<input id="c">
+</div>
+
+<div>
+<label>Opción D</label>
+<input id="d">
+</div>
+
 </div>
 
 <label>Respuesta correcta</label>
@@ -122,50 +107,77 @@ cursor:pointer;
 <option value="D">D</option>
 </select>
 
-<label>Tiempo (segundos)</label>
-<input id="tiempo" type="number" value="300">
+<div class="grid">
 
+<div>
 <label>Estado</label>
-<div class="status">
-<label><input type="radio" name="estado" value="Activa" checked> Activa</label>
-<label><input type="radio" name="estado" value="Inactiva"> Inactiva</label>
+<select id="estado">
+<option>Activa</option>
+<option>Inactiva</option>
+</select>
 </div>
 
-<button onclick="guardar()">💾 Guardar Trivia</button>
+<div>
+<label>Tiempo (segundos)</label>
+<input id="tiempo" type="number" value="300">
+</div>
 
-<p id="msg" style="text-align:center;margin-top:10px;"></p>
+</div>
+
+<button onclick="guardar()">Guardar Trivia</button>
+
+<div id="msg"></div>
 
 </div>
 
 <script>
 
-const SCRIPT_URL="https://script.google.com/macros/s/AKfycbwnRz0jHfErkG7GrljCaT9FEmz3HMsjWz1u8VqhXV7wb_Ai9AMABEJJkGRojw1c3ICaJQ/exec";
+const SCRIPT_URL="https://script.google.com/macros/s/AKfycbydDWKZeSXHQesgay6WydQvD140EFW2Uo73edhbjW6p7YhnQsvjE4x1jkEJYGpZGqYcnA/exec";
+
+function preview(){
+const url=document.getElementById("imagen").value.trim();
+const img=document.getElementById("vista");
+if(url){
+img.src=url;
+img.style.display="block";
+}else{
+img.style.display="none";
+}
+}
 
 async function guardar(){
 
-const data={
-pregunta:document.getElementById("pregunta").value,
-imagen:document.getElementById("imagen").value,
-a:document.getElementById("opA").value,
-b:document.getElementById("opB").value,
-c:document.getElementById("opC").value,
-d:document.getElementById("opD").value,
-correcta:document.getElementById("correcta").value,
-tiempo:document.getElementById("tiempo").value,
-estado:document.querySelector('input[name="estado"]:checked').value
-};
-
-const res=await fetch(SCRIPT_URL,{
-method:"POST",
-body:new URLSearchParams({
+const datos=new URLSearchParams({
 accion:"guardarTrivia",
-...data
-})
+pregunta:pregunta.value,
+imagen:imagen.value,
+a:a.value,
+b:b.value,
+c:c.value,
+d:d.value,
+correcta:correcta.value,
+estado:estado.value,
+tiempo:tiempo.value
 });
 
-const r=await res.json();
+try{
 
-document.getElementById("msg").innerText="✔ Guardado correctamente";
+const r=await fetch(SCRIPT_URL,{
+method:"POST",
+body:datos
+});
+
+const res=await r.json();
+
+if(res.ok){
+msg.innerHTML="✅ Trivia guardada correctamente.";
+}else{
+msg.innerHTML="❌ No se pudo guardar.";
+}
+
+}catch(e){
+msg.innerHTML="❌ Error de conexión.";
+}
 
 }
 
