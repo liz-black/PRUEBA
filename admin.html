@@ -66,31 +66,28 @@ img.style.display = "none";
 }
 }
 
-// 🔥 GUARDAR (SIN await ERROR)
 async function guardar(){
 
-const msg = document.getElementById("msg");
 msg.innerText = "Guardando...";
 
-const datos = new URLSearchParams();
-datos.append("accion","guardarTrivia");
-datos.append("pregunta",document.getElementById("pregunta").value);
-datos.append("imagen",document.getElementById("imagen").value);
-datos.append("a",document.getElementById("a").value);
-datos.append("b",document.getElementById("b").value);
-datos.append("c",document.getElementById("c").value);
-datos.append("d",document.getElementById("d").value);
-datos.append("correcta",document.getElementById("correcta").value);
+const data = {
+accion:"guardarTrivia",
+pregunta:pregunta.value,
+imagen:imagen.value,
+a:a.value,
+b:b.value,
+c:c.value,
+d:d.value,
+correcta:correcta.value
+};
 
 fetch(SCRIPT_URL,{
 method:"POST",
-mode:"no-cors",
-body:datos
+body: JSON.stringify(data)
 });
 
-msg.innerText = "✅ Guardado (reemplazado en Sheets)";
+msg.innerText = "✅ Guardado (reemplaza pregunta)";
 }
-
 </script>
 
 </body>
