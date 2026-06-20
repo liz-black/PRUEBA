@@ -1,244 +1,136 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<title>Trivia Pro</title>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body {
+        font-family: Arial;
+        background: #111;
+        color: white;
+        text-align: center;
+        padding: 20px;
+      }
 
-<style>
-body{
-margin:0;
-font-family:Arial;
-background:linear-gradient(135deg,#46178f,#e21b3c);
-color:white;
-}
+      .card {
+        max-width: 600px;
+        margin: auto;
+        background: #1e1e1e;
+        padding: 20px;
+        border-radius: 12px;
+      }
 
-.timer{
-position:absolute;
-top:10px;
-right:10px;
-background:rgba(0,0,0,.4);
-padding:10px 15px;
-border-radius:20px;
-font-size:20px;
-}
+      button {
+        width: 100%;
+        padding: 15px;
+        margin-top: 10px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+      }
 
-.container{
-display:flex;
-flex-direction:column;
-align-items:center;
-padding-top:60px;
-}
+      .A { background: #ff4d4d; }
+      .B { background: #4d79ff; }
+      .C { background: #4dff88; }
+      .D { background: #ffd24d; }
 
-img{
-width:90%;
-max-width:700px;
-border-radius:15px;
-margin:10px 0;
-}
+      #timer {
+        font-size: 20px;
+        margin-bottom: 10px;
+      }
 
-.question{
-font-size:28px;
-font-weight:bold;
-text-align:center;
-margin:10px;
-}
+      #result {
+        margin-top: 15px;
+        font-size: 18px;
+        font-weight: bold;
+      }
 
-.options{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:10px;
-width:90%;
-max-width:700px;
-margin-top:10px;
-}
+    </style>
+  </head>
 
-.option{
-padding:18px;
-background:rgba(0,0,0,.3);
-border-radius:12px;
-text-align:center;
-cursor:pointer;
-font-size:18px;
-transition:.2s;
-}
+  <body>
 
-.option:hover{
-background:rgba(255,255,255,.2);
-}
+    <div class="card">
 
-.final{
-display:flex;
-height:100vh;
-}
+      <h2>🎮 TRIVIA ZULEN</h2>
 
-.left, .right{
-flex:1;
-padding:30px;
-overflow:auto;
-}
+      <div id="timer">⏳ 00</div>
 
-.card{
-background:rgba(255,255,255,.1);
-padding:20px;
-border-radius:15px;
-margin-bottom:10px;
-}
+      <p id="pregunta">Cargando pregunta...</p>
 
-.rank{
-font-size:18px;
-margin:6px 0;
-}
+      <button class="A" onclick="responder('A')">A</button>
+      <button class="B" onclick="responder('B')">B</button>
+      <button class="C" onclick="responder('C')">C</button>
+      <button class="D" onclick="responder('D')">D</button>
 
-.highlight{
-color:#FFD54F;
-font-weight:bold;
-}
-</style>
-</head>
+      <p id="result"></p>
 
-<body>
+    </div>
 
-<div class="timer" id="timer">10</div>
+    <script>
 
-<div class="container" id="game">
+      let tiempo = 30;
+      let intervalo;
 
-<div class="question" id="question"></div>
-<img id="img">
-<div class="options" id="options"></div>
+      function iniciarTimer() {
+        intervalo = setInterval(() => {
+          tiempo--;
+          document.getElementById("timer").innerText = "⏳ " + tiempo;
 
-</div>
+          if (tiempo <= 0) {
+            clearInterval(intervalo);
+            bloquear();
+          }
 
-<script>
+        }, 1000);
+      }
 
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzu7rKYIK5VYI8nSHDtiSn9HqzhGkpb5H5nFuj3dOKjQgRX2li8kbAum8R53tfTnIJikQ/exec";
+      function bloquear() {
+        document.querySelectorAll("button").forEach(b => {
+          b.disabled = true;
+        });
 
-const nombre = sessionStorage.getItem("nombre") || "Invitado";
-const dni = sessionStorage.getItem("dni") || "000";
+        document.getElementById("result").innerText = "⛔ Tiempo terminado";
+      }
 
-let tiempo = 10;
-let interval;
-let puntaje = 0;
-let correcta = "";
+      function cargarPregunta() {
+        google.script.run.withSuccessHandler(function(data) {
 
-async function cargarPregunta(){
+          document.getElementById("pregunta").innerText =
+            data.pregunta;
 
-const res = await fetch(SCRIPT_URL + "?accion=obtenerPregunta");
-const data = await res.json();
+          document.querySelector(".A").innerText = "A) " + data.A;
+          document.querySelector(".B").innerText = "B) " + data.B;
+          document.querySelector(".C").innerText = "C) " + data.C;
+          document.querySelector(".D").innerText = "D) " + data.D;
 
-document.getElementById("question").innerText = data.pregunta;
-document.getElementById("img").src = data.imagen;
+          iniciarTimer();
 
-correcta = data.correcta;
+        }).getPreguntaActiva();
+      }
 
-const letras = ["A","B","C","D"];
-const cont = document.getElementById("options");
+      function responder(opcion) {
 
-cont.innerHTML = "";
+        clearInterval(intervalo);
 
-["a","b","c","d"].forEach((op,i)=>{
+        let nombre = prompt("Ingresa tu nombre:");
+        let dni = prompt("Ingresa tu DNI:");
 
-const div = document.createElement("div");
-div.className = "option";
-div.innerText = data[op];
+        google.script.run.withSuccessHandler(function(res) {
+          document.getElementById("result").innerText = res;
 
-div.onclick = ()=> seleccionar(letras[i]);
+          bloquear();
 
-cont.appendChild(div);
+        }).guardarResultado({
+          nombre: nombre,
+          dni: dni,
+          respuesta: opcion
+        });
+      }
 
-});
+      cargarPregunta();
 
-startTimer();
+    </script>
 
-}
-
-function startTimer(){
-
-tiempo = 10;
-
-interval = setInterval(()=>{
-
-tiempo--;
-document.getElementById("timer").innerText = tiempo;
-
-if(tiempo <= 0){
-clearInterval(interval);
-finalizar();
-}
-
-},1000);
-
-}
-
-function seleccionar(op){
-
-clearInterval(interval);
-
-if(op == correcta){
-puntaje += tiempo * 100;
-}
-
-finalizar();
-
-}
-
-async function obtenerRanking(){
-
-const res = await fetch(SCRIPT_URL + "?accion=ranking");
-return await res.json();
-
-}
-
-async function finalizar(){
-
-await fetch(SCRIPT_URL, {
-method:"POST",
-body:new URLSearchParams({
-accion:"guardarResultado",
-nombre:nombre,
-dni:dni,
-puntaje:puntaje,
-tiempo:10 - tiempo
-})
-});
-
-// 🔥 SIMULAMOS RANKING (si aún no tienes backend ranking)
-const ranking = await obtenerRanking().catch(()=>[]);
-
-document.getElementById("game").innerHTML = `
-<div class="final">
-
-<div class="left">
-<h2>🎮 Tu resultado</h2>
-<div class="card">
-<p><b>Nombre:</b> ${nombre}</p>
-<p><b>DNI:</b> ${dni}</p>
-<p><b>Puntaje:</b> <span class="highlight">${puntaje}</span></p>
-</div>
-</div>
-
-<div class="right">
-<h2>🏆 TOP 10</h2>
-${
-(ranking.length ? ranking : [
-{nombre:"Juan",puntaje:900},
-{nombre:"Maria",puntaje:800},
-{nombre:"Luis",puntaje:700}
-]).map((r,i)=>`
-<div class="rank">
-${i+1}. ${r.nombre} - <span class="highlight">${r.puntaje}</span>
-</div>
-`).join("")
-}
-</div>
-
-</div>
-`;
-
-}
-
-cargarPregunta();
-
-</script>
-
-</body>
+  </body>
 </html>
