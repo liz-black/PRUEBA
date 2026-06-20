@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<button onclick="test()">PROBAR GUARDAR</button>
+
+<script>
+
+const URL = "https://script.google.com/macros/s/AKfycbydDWKZeSXHQesgay6WydQvD140EFW2Uo73edhbjW6p7YhnQsvjE4x1jkEJYGpZGqYcnA/exec";
+
+function test(){
+
+const form = new URLSearchParams();
+
+form.append("accion","guardarTrivia");
+form.append("pregunta","PREGUNTA TEST");
+form.append("imagen","");
+form.append("a","1");
+form.append("b","2");
+form.append("c","3");
+form.append("d","4");
+form.append("correcta","A");
+
+fetch(URL,{
+method:"POST",
+body:form
+})
+.then(r=>r.text())
+.then(r=>{
+alert("RESPUESTA: " + r);
+});
+
+}
+
+</script>
+
+</body>
+</html>
