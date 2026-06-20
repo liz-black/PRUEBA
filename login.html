@@ -73,8 +73,17 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzu7rKYIK5VYI8nSHDti
 
 async function login(){
 
-const user = document.getElementById("user").value;
-const pass = document.getElementById("pass").value;
+const user = document.getElementById("user").value.trim();
+const pass = document.getElementById("pass").value.trim();
+
+document.getElementById("error").innerText = "";
+
+if(!user || !pass){
+document.getElementById("error").innerText = "Completa todos los campos";
+return;
+}
+
+try{
 
 const res = await fetch(SCRIPT_URL, {
 method:"POST",
@@ -88,9 +97,22 @@ contrasena:pass
 const data = await res.json();
 
 if(data.ok){
+
+// 🔥 guardar sesión docente
+sessionStorage.setItem("docente","true");
+
+// opcional: guardar usuario
+sessionStorage.setItem("usuario",user);
+
+// ir al panel
 location.href = "admin.html";
+
 }else{
 document.getElementById("error").innerText = "Usuario o contraseña incorrectos";
+}
+
+}catch(e){
+document.getElementById("error").innerText = "Error de conexión con el servidor";
 }
 
 }
