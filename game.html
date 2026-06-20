@@ -1,136 +1,208 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <base target="_top">
-    <style>
-      body {
-        font-family: Arial;
-        background: #111;
-        color: white;
-        text-align: center;
-        padding: 20px;
-      }
+<head>
+  <base target="_top">
+  <style>
+    body {
+      font-family: Arial;
+      background: #111;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
 
-      .card {
-        max-width: 600px;
-        margin: auto;
-        background: #1e1e1e;
-        padding: 20px;
-        border-radius: 12px;
-      }
+    .card {
+      max-width: 600px;
+      margin: auto;
+      background: #1e1e1e;
+      padding: 20px;
+      border-radius: 12px;
+    }
 
-      button {
-        width: 100%;
-        padding: 15px;
-        margin-top: 10px;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 16px;
-      }
+    button {
+      width: 100%;
+      padding: 15px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      color: white;
+    }
 
-      .A { background: #ff4d4d; }
-      .B { background: #4d79ff; }
-      .C { background: #4dff88; }
-      .D { background: #ffd24d; }
+    .A { background: #ff4d4d; }
+    .B { background: #4d79ff; }
+    .C { background: #4dff88; }
+    .D { background: #ffd24d; }
 
-      #timer {
-        font-size: 20px;
-        margin-bottom: 10px;
-      }
+    #timer {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
 
-      #result {
-        margin-top: 15px;
-        font-size: 18px;
-        font-weight: bold;
-      }
+    #result {
+      margin-top: 15px;
+      font-size: 18px;
+      font-weight: bold;
+    }
 
-    </style>
-  </head>
+  </style>
+</head>
 
-  <body>
+<body>
 
-    <div class="card">
+  <div class="card">
 
-      <h2>🎮 TRIVIA ZULEN</h2>
+    <h2>🎮 TRIVIA ZULEN</h2>
 
-      <div id="timer">⏳ 00</div>
+    <div id="timer">⏳ 00</div>
 
-      <p id="pregunta">Cargando pregunta...</p>
+    <p id="pregunta">Cargando pregunta...</p>
 
-      <button class="A" onclick="responder('A')">A</button>
-      <button class="B" onclick="responder('B')">B</button>
-      <button class="C" onclick="responder('C')">C</button>
-      <button class="D" onclick="responder('D')">D</button>
+    <button class="A" onclick="responder('A')">A</button>
+    <button class="B" onclick="responder('B')">B</button>
+    <button class="C" onclick="responder('C')">C</button>
+    <button class="D" onclick="responder('D')">D</button>
 
-      <p id="result"></p>
+    <p id="result"></p>
 
-    </div>
+  </div>
 
-    <script>
+<script>
 
-      let tiempo = 30;
-      let intervalo;
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydDWKZeSXHQesgay6WydQvD140EFW2Uo73edhbjW6p7YhnQsvjE4x1jkEJYGpZGqYcnA/exec";
 
-      function iniciarTimer() {
-        intervalo = setInterval(() => {
-          tiempo--;
-          document.getElementById("timer").innerText = "⏳ " + tiempo;
+let tiempo = 0;
+let intervalo;
+let preguntaActual = null;
 
-          if (tiempo <= 0) {
-            clearInterval(intervalo);
-            bloquear();
-          }
+// ==========================
+// CARGAR CONFIG + PREGUNTA
+// ==========================
+async function cargarJuego() {
 
-        }, 1000);
-      }
+  try {
 
-      function bloquear() {
-        document.querySelectorAll("button").forEach(b => {
-          b.disabled = true;
-        });
+    const confRes = await fetch(SCRIPT_URL + "?accion=configuracion");
+    const conf = await confRes.json();
 
-        document.getElementById("result").innerText = "⛔ Tiempo terminado";
-      }
+    if (!conf.ok || conf.estado !== "Activa") {
+      document.getElementById("pregunta").innerText = "⛔ Trivia no activa";
+      return;
+    }
 
-      function cargarPregunta() {
-        google.script.run.withSuccessHandler(function(data) {
+    tiempo = parseInt(conf.tiempo || 30);
+    iniciarTimer();
 
-          document.getElementById("pregunta").innerText =
-            data.pregunta;
+    const pregRes = await fetch(SCRIPT_URL + "?accion=pregunta");
+    const data = await pregRes.json();
 
-          document.querySelector(".A").innerText = "A) " + data.A;
-          document.querySelector(".B").innerText = "B) " + data.B;
-          document.querySelector(".C").innerText = "C) " + data.C;
-          document.querySelector(".D").innerText = "D) " + data.D;
+    if (!data.ok) return;
 
-          iniciarTimer();
+    preguntaActual = data;
 
-        }).getPreguntaActiva();
-      }
+    document.getElementById("pregunta").innerText = data.pregunta;
 
-      function responder(opcion) {
+    document.querySelector(".A").innerText = "A) " + data.a;
+    document.querySelector(".B").innerText = "B) " + data.b;
+    document.querySelector(".C").innerText = "C) " + data.c;
+    document.querySelector(".D").innerText = "D) " + data.d;
 
-        clearInterval(intervalo);
+  } catch (e) {
+    document.getElementById("result").innerText = "❌ Error de conexión";
+  }
+}
 
-        let nombre = prompt("Ingresa tu nombre:");
-        let dni = prompt("Ingresa tu DNI:");
+// ==========================
+// TIMER
+// ==========================
+function iniciarTimer() {
 
-        google.script.run.withSuccessHandler(function(res) {
-          document.getElementById("result").innerText = res;
+  document.getElementById("timer").innerText = "⏳ " + tiempo;
 
-          bloquear();
+  intervalo = setInterval(() => {
 
-        }).guardarResultado({
-          nombre: nombre,
-          dni: dni,
-          respuesta: opcion
-        });
-      }
+    tiempo--;
+    document.getElementById("timer").innerText = "⏳ " + tiempo;
 
-      cargarPregunta();
+    if (tiempo <= 0) {
+      clearInterval(intervalo);
+      bloquear();
+    }
 
-    </script>
+  }, 1000);
+}
 
-  </body>
+// ==========================
+// BLOQUEAR
+// ==========================
+function bloquear() {
+
+  document.querySelectorAll("button").forEach(b => {
+    b.disabled = true;
+  });
+
+  document.getElementById("result").innerText = "⛔ Tiempo terminado";
+}
+
+// ==========================
+// RESPONDER
+// ==========================
+async function responder(opcion) {
+
+  clearInterval(intervalo);
+
+  const nombre = sessionStorage.getItem("nombre");
+  const dni = sessionStorage.getItem("dni");
+
+  if (!nombre || !dni) {
+    alert("Datos no encontrados. Vuelve a iniciar.");
+    location.href = "index.html";
+    return;
+  }
+
+  document.querySelectorAll("button").forEach(b => b.disabled = true);
+
+  // calcular puntaje
+  let puntaje = 0;
+
+  if (preguntaActual && opcion === preguntaActual.correcta) {
+    puntaje = 1;
+  }
+
+  const datos = new URLSearchParams({
+    accion: "guardarResultado",
+    nombre: nombre,
+    dni: dni,
+    puntaje: puntaje,
+    tiempo: tiempo
+  });
+
+  try {
+
+    const res = await fetch(SCRIPT_URL, {
+      method: "POST",
+      body: datos
+    });
+
+    const json = await res.json();
+
+    if (json.ok) {
+      document.getElementById("result").innerText =
+        puntaje ? "✅ Correcto +1 punto" : "❌ Incorrecto";
+    } else {
+      document.getElementById("result").innerText = "❌ Error al guardar";
+    }
+
+  } catch (e) {
+    document.getElementById("result").innerText = "❌ Error de servidor";
+  }
+}
+
+// iniciar
+cargarJuego();
+
+</script>
+
+</body>
 </html>
